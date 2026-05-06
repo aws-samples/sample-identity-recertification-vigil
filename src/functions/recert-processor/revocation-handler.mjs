@@ -76,7 +76,13 @@ const executeRevocation = async (event) => {
     return { success: false, method: 'TICKET' };
   }
 
-  const executor = SUPPORTED_REVOCATION_TYPES[resourceType];
+  // Route to the appropriate revocation executor based on resource type
+  let executor = null;
+  if (resourceType === 's3:bucket') {
+    executor = executeS3Revocation;
+  } else if (resourceType === 'iam:user') {
+    executor = executeIamRevocation;
+  }
 
   if (executor) {
     // Determine if cross-account credentials are needed

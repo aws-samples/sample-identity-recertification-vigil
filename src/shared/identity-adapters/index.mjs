@@ -28,9 +28,20 @@ const adapterCache = {};
 const getAdapter = (identitySource) => {
   if (adapterCache[identitySource]) return adapterCache[identitySource];
 
-  const AdapterClass = ADAPTERS[identitySource];
-  if (!AdapterClass) {
-    throw new Error(`Unknown identity source: ${identitySource}`);
+  let AdapterClass;
+  switch (identitySource) {
+    case 'COGNITO':
+    case 'JIT':
+      AdapterClass = CognitoAdapter;
+      break;
+    case 'IAM':
+      AdapterClass = IamAdapter;
+      break;
+    case 'IDENTITY_CENTER':
+      AdapterClass = IdentityCenterAdapter;
+      break;
+    default:
+      throw new Error(`Unknown identity source: ${identitySource}`);
   }
 
   adapterCache[identitySource] = new AdapterClass();

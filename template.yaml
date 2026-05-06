@@ -88,6 +88,10 @@ Resources:
     Properties:
       TableName: !Sub 'IdentityGovernanceTable-${Stage}'
       BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: alias/aws/dynamodb
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       StreamSpecification:
@@ -137,6 +141,37 @@ Resources:
             ProjectionType: ALL
 
 
+  # S3 Access Logs Bucket
+
+  AccessLogsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub 'identity-governance-access-logs-${Stage}-${AWS::AccountId}'
+      AccessControl: LogDeliveryWrite
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteLogsAfter90Days
+            Status: Enabled
+            ExpirationInDays: 90
+      Tags:
+        - Key: Project
+          Value: IdentityGovernance
+        - Key: Environment
+          Value: !Ref Stage
+
   # S3 Evidence Bucket (Task 10.3) 
 
   EvidenceBucket:
@@ -145,6 +180,7 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties:
       BucketName: !Sub 'identity-governance-evidence-${Stage}-${AWS::AccountId}'
+      AccessControl: Private
       ObjectLockEnabled: true
       ObjectLockConfiguration:
         ObjectLockEnabled: Enabled
@@ -158,6 +194,9 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      LoggingConfiguration:
+        DestinationBucketName: !Ref AccessLogsBucket
+        LogFilePrefix: evidence-bucket-logs/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -253,12 +292,27 @@ Resources:
 
   # API Gateway (Task 10.5) 
 
+  # API Gateway Access Log Group
+
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/IdentityGovernance-${Stage}'
+      RetentionInDays: 90
+      Tags:
+        - Key: Project
+          Value: IdentityGovernance
+        - Key: Environment
+          Value: !Ref Stage
+
   GovernanceApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: !Sub 'IdentityGovernance-API-${Stage}'
       StageName: !Ref Stage
       TracingEnabled: true
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
       Cors:
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization'"
