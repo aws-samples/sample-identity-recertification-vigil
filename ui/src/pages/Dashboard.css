@@ -1,0 +1,230 @@
+.dashboard {
+  max-width: 1400px;
+}
+
+.dash-title {
+  margin: 0 0 24px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.dash-loading,
+.dash-error {
+  padding: 60px;
+  text-align: center;
+  color: #4a5568;
+}
+
+.dash-error button {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dash-error button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* Summary cards */
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.summary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-top: 3px solid #4f46e5;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a202c;
+  line-height: 1.2;
+}
+
+.card-label {
+  display: block;
+  font-size: 11px;
+  color: #718096;
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+/* Sections */
+
+.dash-section {
+  margin-bottom: 28px;
+}
+
+.dash-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dash-section-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.dash-section-header .dash-section-title {
+  margin-bottom: 0;
+}
+
+/* Period selector */
+
+.period-selector {
+  display: flex;
+  gap: 4px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid #e2e8f0;
+}
+
+.period-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #718096;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.period-btn:hover {
+  color: #4a5568;
+  background: #e2e8f0;
+}
+
+.period-btn--active {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Charts */
+
+.chart-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card-title {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.chart-empty {
+  text-align: center;
+  color: #718096;
+  font-style: italic;
+  padding: 40px 0;
+}
+
+/* Per-Account Breakdown */
+
+.account-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.account-breakdown-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.account-breakdown-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.account-breakdown-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-breakdown-id {
+  font-size: 11px;
+  color: #718096;
+  margin-bottom: 8px;
+  font-family: monospace;
+}
+
+.account-breakdown-count {
+  font-size: 28px;
+  font-weight: 800;
+  color: #4f46e5;
+  line-height: 1.2;
+}
+
+.account-breakdown-label {
+  font-size: 11px;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}

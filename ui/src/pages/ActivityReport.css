@@ -1,0 +1,9 @@
+/* ActivityReport page styles */
+.activity-report { max-width: 1200px; }
+.activity-header { margin-bottom: 24px; }
+.activity-title { font-size: 22px; font-weight: 600; color: #1a202c; margin: 0 0 4px; }
+.activity-subtitle { font-size: 13px; color: #718096; }
+.activity-placeholder { padding: 48px; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.activity-placeholder-icon { font-size: 48px; margin-bottom: 12px; }
+.activity-placeholder-text { font-size: 16px; color: #4a5568; margin-bottom: 4px; }
+.activity-placeholder-sub { font-size: 13px; color: #718096; }

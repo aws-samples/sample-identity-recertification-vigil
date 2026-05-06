@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  VIGIL Cross-Account Role - Deployed via StackSet to member accounts.
+  Grants the management account's VIGIL Lambda functions read and revocation
+  permissions for multi-account governance.
+
+Parameters:
+  ManagementAccountId:
+    Type: String
+    Description: 12-digit AWS account ID of the management account where VIGIL is deployed
+    AllowedPattern: '^\d{12}$'
+    ConstraintDescription: Must be a 12-digit AWS account ID
+
+Resources:
+  VIGILCrossAccountRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VIGILCrossAccountRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${ManagementAccountId}:root'
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: VIGILReadPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: ResourceDiscovery
+                Effect: Allow
+                Action:
+                  - tag:GetResources
+                Resource: '*'
+              - Sid: S3ReadAccess
+                Effect: Allow
+                Action:
+                  - s3:GetBucketPolicy
+                  - s3:GetPublicAccessBlock
+                  - s3:GetBucketAcl
+                Resource: '*'
+              - Sid: IAMReadAccess
+                Effect: Allow
+                Action:
+                  - iam:ListUsers
+                  - iam:SimulatePrincipalPolicy
+                  - iam:ListAttachedUserPolicies
+                  - iam:ListUserPolicies
+                  - iam:ListGroupsForUser
+                  - iam:ListAccessKeys
+                Resource: '*'
+              - Sid: CloudTrailReadAccess
+                Effect: Allow
+                Action:
+                  - cloudtrail:LookupEvents
+                Resource: '*'
+        - PolicyName: VIGILRevocationPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: S3Revocation
+                Effect: Allow
+                Action:
+                  - s3:DeleteBucketPolicy
+                  - s3:PutPublicAccessBlock
+                  - s3:PutBucketAcl
+                  - s3:PutBucketPolicy
+                Resource: '*'
+              - Sid: IAMRevocation
+                Effect: Allow
+                Action:
+                  - iam:DetachUserPolicy
+                  - iam:RemoveUserFromGroup
+                  - iam:UpdateAccessKey
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: IdentityGovernance
+        - Key: Purpose
+          Value: CrossAccountGovernance
+
+Outputs:
+  RoleArn:
+    Description: ARN of the VIGIL cross-account role
+    Value: !GetAtt VIGILCrossAccountRole.Arn

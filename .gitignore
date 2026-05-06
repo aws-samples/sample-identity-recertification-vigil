@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+.aws-sam/
+ui/dist/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Kiro workspace
+.kiro/
+
+# Environment files
+ui/.env
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Tests
+tests/
+
+# Seed scripts
+scripts/seed-data.mjs
+scripts/seed-real-data.mjs
+
+# Generated reports
+Success.md
+
+# Logs
+*.log
