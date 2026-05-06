@@ -31,5 +31,9 @@ scripts/seed-real-data.mjs
 # Generated reports
 Success.md
 
+# Security reports
+security-reports/
+recertify-scan-report.json
+
 # Logs
 *.log
