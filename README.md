@@ -302,4 +302,4 @@ This satisfies:
 
 ## License
 
-Proprietary. Internal use only.
+This project is licensed under the MIT-0 License. 
