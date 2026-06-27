@@ -48,26 +48,7 @@ included UI or embed the engine behind your own application.
 
 ## How it works
 
-```
-                       +-------------------+
-  Client (Cognito JWT) |   recert-api      |  cycles / reviews / decisions / rollback
-        --REST------>  +---------+---------+
-                                 | enqueue decision
-                                 v
-                          +-------------+        +------------------+
-                          |  SQS queue  |--DLQ-->|  CloudWatch alarm |
-                          +------+------+        +------------------+
-                                 | poll (batch)
-                                 v
-                       +-------------------+   snapshot -> apply -> verify -> evidence
-                       |  recert-enforcer  |--> Connectors (S3 / IAM user / IAM role / ...)
-                       +---------+---------+
-                                 |
-              +------------------+------------------+
-              v                  v                  v
-        DynamoDB            Evidence (optional      Amazon SES
-   (single table)           S3 Object Lock)         (owner notifications)
-```
+![Recertification engine architecture](../docs/architecture.png)
 
 A recertification cycle moves through these stages:
 
