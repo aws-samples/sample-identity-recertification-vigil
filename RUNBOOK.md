@@ -36,7 +36,7 @@ authorizer.
 | `recert-enforcer` | SQS | Applies decisions via connectors; writes evidence; updates status. |
 | `recert-notifier` | Async invoke | Sends owner emails (initial / reminder / escalation / confirmation). |
 
-See [docs/architecture.svg](docs/architecture.svg) for the diagram.
+See [docs/architecture.png](docs/architecture.png) for the diagram.
 
 ---
 

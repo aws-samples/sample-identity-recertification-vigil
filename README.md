@@ -61,28 +61,6 @@ src/, scripts/, ...      # Legacy VIGIL platform components (audit, IdP sync, da
 
 ![Recertification engine architecture](docs/architecture.png)
 
-```
-                       +-------------------+
-  Client UI  --REST-->  |   recert-api      |  cycles / reviews / decisions / rollback
-  (Cognito JWT)        +---------+---------+
-                                 | enqueue (decision)
-                                 v
-                          +-------------+        +------------------+
-                          |  SQS queue  |--DLQ-->|  alarm + replay  |
-                          +------+------+        +------------------+
-                                 |
-                                 v
-                       +-------------------+   snapshot -> apply -> verify -> evidence
-                       |  recert-enforcer  |--> Resource Connectors (S3, IAM user, IAM role)
-                       +---------+---------+
-                                 |
-              +------------------+------------------+
-              v                  v                  v
-        DynamoDB            Evidence (optional      SES (owner notifications)
-   (cycles/items/           S3 WORM)
-    decisions/snapshots)
-```
-
 Discovery and notification run as their own Lambda functions, triggered on cycle creation
 and by an EventBridge schedule. The REST API is protected by an **Amazon Cognito user pool
 authorizer** (`COGNITO_USER_POOLS`); callers pass a Cognito ID token in the `Authorization`
