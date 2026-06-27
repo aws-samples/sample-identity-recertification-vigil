@@ -177,6 +177,34 @@ User pool groups:
 | `owner` | Submit decisions for resources they own. |
 | `admin` | Start cycles, perform rollbacks. |
 
+### Production hardening of the user pool
+
+For non-dev stages, do not let the engine create its own pool. Provision a hardened pool first
+and pass its ARN via the `CognitoUserPoolArn` parameter so the API authorizer reuses it. The
+helper script `scripts/setup-cognito-prod.sh` provisions one with:
+
+- **MFA required** (TOTP / authenticator app via `set-user-pool-mfa-config`).
+- **Advanced security `ENFORCED`** for compromised-credential and risk detection.
+- **SRP-only app client** — explicit auth flows limited to `ALLOW_USER_SRP_AUTH` and
+  `ALLOW_REFRESH_TOKEN_AUTH`. The admin/password flows (`ALLOW_ADMIN_USER_PASSWORD_AUTH`,
+  `ALLOW_USER_PASSWORD_AUTH`) are intentionally absent, so password-grant auth cannot occur.
+- **Strong password policy** (14+ chars, all character classes) and **short token lifetimes**
+  (60-minute access/ID tokens, 30-day refresh).
+- **Admin-only user creation** (no self sign-up) and **user-existence errors masked**
+  (`PreventUserExistenceErrors=ENABLED`) to block account enumeration.
+
+```bash
+./scripts/setup-cognito-prod.sh \
+  --region us-east-1 \
+  --pool-name recert-engine-prod \
+  --admin-email security-admin@yourcompany.com
+# prints the User Pool ARN -> set it as CognitoUserPoolArn in samconfig [prod]
+```
+
+> Dev stacks may leave `CognitoUserPoolArn` blank (the stack creates a basic pool) and toggle
+> `ALLOW_ADMIN_USER_PASSWORD_AUTH` for headless token tests. Never carry those conveniences into
+> production.
+
 ---
 
 ## API reference
@@ -427,6 +455,8 @@ IAM identity.
 | `TABLE_NAME` | yes | DynamoDB single-table store. |
 | `ENFORCEMENT_QUEUE_URL` | yes | SQS queue the API enqueues decisions to. |
 | `EVIDENCE_BUCKET` | no | S3 Object Lock (WORM) bucket for evidence mirroring. |
+| `EvidenceRetentionDays` (param) | no (2920) | WORM Object Lock retention in days; applies when `EnableEvidenceBucket=true`. |
+| `EvidenceLockMode` (param) | no (`COMPLIANCE`) | Object Lock mode: `COMPLIANCE` (no early delete, even root) or `GOVERNANCE` (privileged override). |
 | `SES_SENDER_EMAIL` | yes | Verified SES sender for owner emails. |
 | `UI_BASE_URL` | yes | Base URL used in email deep links. |
 | `RECERT_DEADLINE_DAYS` | no (14) | Review window in days. |

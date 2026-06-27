@@ -1,0 +1,36 @@
+version = 0.1
+
+# Deploy with:  sam build && sam deploy --config-env prod
+# (dev profile mirrors the sandbox stack and is kept for reference)
+
+# ---------------------------------------------------------------------------
+# Production profile  ->  sam deploy --config-env prod
+# Replace <ACCOUNT_ID> / <POOL_ID> and the email + UI domain before first use.
+# Hardened defaults: WORM evidence ON, COMPLIANCE lock, 8-year retention,
+# bring-your-own hardened Cognito pool, changeset confirmation required.
+# ---------------------------------------------------------------------------
+[prod.deploy.parameters]
+stack_name = "recert-engine-prod"
+region = "us-east-1"
+resolve_s3 = true
+s3_prefix = "recert-engine-prod"
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+confirm_changeset = true
+disable_rollback = false
+parameter_overrides = "Stage=prod EnableEvidenceBucket=true EvidenceLockMode=COMPLIANCE EvidenceRetentionDays=2920 SesSenderEmail=\"recert@yourcompany.com\" UiBaseUrl=\"https://recert.yourcompany.com\" CognitoUserPoolArn=\"arn:aws:cognito-idp:us-east-1:<ACCOUNT_ID>:userpool/<POOL_ID>\" CrossAccountRoleName=VIGILCrossAccountRole RecertDeadlineDays=14"
+tags = "Project=RecertEngine Environment=prod"
+
+# ---------------------------------------------------------------------------
+# Dev / sandbox profile  ->  sam deploy --config-env dev
+# Cleanable: no WORM bucket, lets the stack create its own Cognito pool.
+# ---------------------------------------------------------------------------
+[dev.deploy.parameters]
+stack_name = "recert-engine-dev"
+region = "us-east-1"
+resolve_s3 = true
+s3_prefix = "recert-engine-dev"
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+confirm_changeset = false
+disable_rollback = false
+parameter_overrides = "Stage=dev EnableEvidenceBucket=false SesSenderEmail=\"noreply@example.com\" UiBaseUrl=\"https://d3vcytk2biyg7m.cloudfront.net\" RecertDeadlineDays=14"
+tags = "Project=RecertEngine Environment=dev"

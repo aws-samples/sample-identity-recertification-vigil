@@ -33,6 +33,16 @@ Parameters:
     Default: 'true'
     AllowedValues: ['true', 'false']
     Description: Create an S3 Object Lock (WORM) bucket for evidence mirroring
+  EvidenceRetentionDays:
+    Type: Number
+    Default: 2920
+    MinValue: 1
+    Description: WORM Object Lock default retention period in days (e.g. 2920 = 8 years). Applies only when EnableEvidenceBucket=true.
+  EvidenceLockMode:
+    Type: String
+    Default: COMPLIANCE
+    AllowedValues: [COMPLIANCE, GOVERNANCE]
+    Description: Object Lock mode. COMPLIANCE = no one (incl. root) can delete before expiry; GOVERNANCE = privileged users can override with s3:BypassGovernanceRetention.
 
 Conditions:
   CreatePool: !Equals [!Ref CognitoUserPoolArn, '']
@@ -129,7 +139,7 @@ Resources:
       ObjectLockEnabled: true
       ObjectLockConfiguration:
         ObjectLockEnabled: Enabled
-        Rule: { DefaultRetention: { Mode: COMPLIANCE, Days: 2920 } }
+        Rule: { DefaultRetention: { Mode: !Ref EvidenceLockMode, Days: !Ref EvidenceRetentionDays } }
       VersioningConfiguration: { Status: Enabled }
       BucketEncryption:
         ServerSideEncryptionConfiguration:
