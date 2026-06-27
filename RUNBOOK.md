@@ -230,8 +230,8 @@ revocation semantics. For others, a human-in-the-loop ticket is safer than guess
 
 ## Legacy platform components
 
-The original VIGIL platform (under `src/`, `scripts/`, `stackset-templates/`) included a user
-lifecycle audit trail, IdP sync / deletion proof, activity tracking, dashboards, and the
-`recert-initiator`/`recert-processor` functions. Those components are **not part of the shipped
-recertification engine** and are retained for reference only. The full pre-engine state is
-recoverable at the git tag `pre-engine`.
+The original VIGIL platform included a user lifecycle audit trail, IdP sync / deletion proof,
+activity tracking, dashboards, and the `recert-initiator`/`recert-processor` functions. Those
+components were **not part of the shipped recertification engine** and have been **removed** from
+the repository to keep the shipped artifact lean. The full pre-engine state is recoverable at the
+git tag `pre-engine` (and on `aws-samples/main` history prior to the cleanup commit).

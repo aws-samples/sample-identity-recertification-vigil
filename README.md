@@ -51,8 +51,7 @@ engine/                  # The recertification engine (the product)
     lib/                 # config, ddb, hash chain, time, http helpers
   tests/                 # node:test unit tests
 ui/                      # React 18 + Vite SPA (Login + Recertification + Discovery admin)
-src/, scripts/, ...      # Legacy VIGIL platform components (audit, IdP sync, dashboards) — not
-                         # part of the shipped engine; retained for reference (tag: pre-engine)
+docs/                    # Documentation hub + architecture diagram
 ```
 
 ---
