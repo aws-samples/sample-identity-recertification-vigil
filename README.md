@@ -100,7 +100,9 @@ and by an EventBridge schedule.
 ## Quick start
 
 ```bash
-cd engine
+# Clone the repository
+git clone https://github.com/aws-samples/sample-identity-recertification-vigil.git
+cd sample-identity-recertification-vigil/engine
 
 # Build and deploy (creates its own Cognito pool if you don't supply one)
 sam build
