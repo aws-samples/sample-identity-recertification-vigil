@@ -80,7 +80,7 @@ const sortEntries = (entries, sortBy) => {
  * @param {Function} props.onDecisionsChange - Callback with per-principal decisions Map
  * @param {boolean} [props.disabled] - Disable actions (already submitted)
  */
-const UserAccessTable = ({ accessEntries = [], onDecisionsChange, disabled = false }) => {
+const UserAccessTable = ({ accessEntries = [], onDecisionsChange, onImmediate, disabled = false }) => {
   const [decisions, setDecisions] = useState({});
   const [sortBy, setSortBy] = useState('accessCount');
   const [revokeTarget, setRevokeTarget] = useState(null);
@@ -94,6 +94,7 @@ const UserAccessTable = ({ accessEntries = [], onDecisionsChange, disabled = fal
   }, [onDecisionsChange]);
 
   const handleCertify = (principalArn) => {
+    if (onImmediate) return onImmediate({ [principalArn]: { decision: 'CERTIFIED' } });
     const next = { ...decisions, [principalArn]: { decision: 'CERTIFIED' } };
     updateDecisions(next);
   };
@@ -104,9 +105,11 @@ const UserAccessTable = ({ accessEntries = [], onDecisionsChange, disabled = fal
 
   const confirmRevoke = (reason) => {
     if (!revokeTarget) return;
-    const next = { ...decisions, [revokeTarget.principalArn]: { decision: 'REVOKED', reason } };
-    updateDecisions(next);
+    const target = revokeTarget;
     setRevokeTarget(null);
+    if (onImmediate) return onImmediate({ [target.principalArn]: { decision: 'REVOKED', reason } });
+    const next = { ...decisions, [target.principalArn]: { decision: 'REVOKED', reason } };
+    updateDecisions(next);
   };
 
   const handleModify = (entry) => {
@@ -115,19 +118,20 @@ const UserAccessTable = ({ accessEntries = [], onDecisionsChange, disabled = fal
 
   const confirmModify = (description) => {
     if (!modifyTarget) return;
-    const next = { ...decisions, [modifyTarget.principalArn]: { decision: 'MODIFIED', reason: description } };
-    updateDecisions(next);
+    const target = modifyTarget;
     setModifyTarget(null);
+    if (onImmediate) return onImmediate({ [target.principalArn]: { decision: 'MODIFIED', reason: description } });
+    const next = { ...decisions, [target.principalArn]: { decision: 'MODIFIED', reason: description } };
+    updateDecisions(next);
   };
 
   const handleBulkCertify = () => {
-    const next = { ...decisions };
+    const pending = {};
     for (const entry of accessEntries) {
-      if (!next[entry.principalArn]) {
-        next[entry.principalArn] = { decision: 'CERTIFIED' };
-      }
+      if (!decisions[entry.principalArn]) pending[entry.principalArn] = { decision: 'CERTIFIED' };
     }
-    updateDecisions(next);
+    if (onImmediate) return onImmediate(pending);
+    updateDecisions({ ...decisions, ...pending });
   };
 
   const sorted = sortEntries(accessEntries, sortBy);

@@ -87,6 +87,30 @@ const RecertificationReview = () => {
     setPrincipalDecisions((prev) => ({ ...prev, [resourceKey]: perPrincipalDecisions }));
   };
 
+  // Submit one or more engine-shaped decisions immediately, then reload. Enforcement
+  // runs async via SQS, so re-poll once after a short delay to reflect the enforced status.
+  const submitImmediate = useCallback(async (items) => {
+    if (!items || items.length === 0) return;
+    setSubmitting(true);
+    try {
+      await submitDecisions(cycleId, items, leaderActing || undefined);
+      await loadData();
+      setTimeout(() => { loadData().catch(() => {}); }, 5000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [cycleId, leaderActing, loadData]);
+
+  // Resource-level modal action -> submit now.
+  const submitResourceDecision = (key, decision, extra = {}) =>
+    submitImmediate([engineItem(key, null, { decision, ...extra })]);
+
+  // Per-principal action(s) for one resource -> submit now.
+  const submitPrincipalDecisions = (resourceArn, perPrincipal) =>
+    submitImmediate(Object.entries(perPrincipal).map(([principalArn, d]) => engineItem(resourceArn, principalArn, d)));
+
   const groupedByService = groupByService(accountFilter ? reviews.filter((r) => r.accountId === accountFilter) : reviews);
   const groupedByOwner = isLeader && !leaderActing ? groupByOwnerEmail(accountFilter ? reviews.filter((r) => r.accountId === accountFilter) : reviews) : null;
 
@@ -186,6 +210,7 @@ const RecertificationReview = () => {
             resourceKey={resourceKey}
             principalDecisions={principalDecisions}
             onPrincipalDecisionsChange={handlePrincipalDecisionsChange}
+            onPrincipalImmediate={submitPrincipalDecisions}
           />
         </div>
       ))}
@@ -198,6 +223,8 @@ const RecertificationReview = () => {
           cycleId={cycleId}
           leaderActing={leaderActing}
           onDecision={handleDecision}
+          onSubmitImmediate={submitImmediate}
+          onSubmitResource={submitResourceDecision}
           onClose={() => setModal(null)}
           resourceKey={resourceKey}
           onSubmitAll={async () => {
@@ -265,7 +292,7 @@ const ActionsBar = ({ selected, reviews, decisions, allDecided, submitting, onBu
   );
 };
 
-const ResourceList = ({ items, decisions, onDecision, selected, onSelect, onRevoke, onModify, readOnly, resourceKey, principalDecisions, onPrincipalDecisionsChange }) => {
+const ResourceList = ({ items, decisions, onDecision, selected, onSelect, onRevoke, onModify, readOnly, resourceKey, principalDecisions, onPrincipalDecisionsChange, onPrincipalImmediate }) => {
   const [expanded, setExpanded] = useState(new Set());
 
   const toggleExpand = (key) => {
@@ -335,6 +362,7 @@ const ResourceList = ({ items, decisions, onDecision, selected, onSelect, onRevo
               <UserAccessTable
                 accessEntries={item.accessEntries}
                 onDecisionsChange={(d) => onPrincipalDecisionsChange?.(key, d)}
+                onImmediate={(perPrincipal) => onPrincipalImmediate?.(key, perPrincipal)}
                 disabled={!isPending}
               />
             )}
@@ -352,10 +380,10 @@ const ResourceList = ({ items, decisions, onDecision, selected, onSelect, onRevo
   );
 };
 
-const ModalRouter = ({ modal, selected, reviews, decisions, cycleId, leaderActing, onDecision, onClose, onSubmitAll, onExtendSubmit, resourceKey }) => {
-  if (modal.type === 'REVOKE') return <RevokeModal item={modal.item} onConfirm={(reason, comment, extra = {}) => { onDecision(resourceKey(modal.item), 'REVOKED', { reason, comment, resourceType: modal.item.resourceType, ...extra }); onClose(); }} onClose={onClose} />;
-  if (modal.type === 'MODIFY') return <ModifyModal item={modal.item} onConfirm={(changes, justification) => { onDecision(resourceKey(modal.item), 'MODIFIED', { reason: justification, comment: changes, resourceType: modal.item.resourceType }); onClose(); }} onClose={onClose} />;
-  if (modal.type === 'BULK_CERTIFY') return <BulkCertifyModal selected={selected} reviews={reviews} decisions={decisions} onConfirm={(keys) => { keys.forEach((k) => { const r = reviews.find((rv) => resourceKey(rv) === k); onDecision(k, 'CERTIFIED', { resourceType: r?.resourceType }); }); onClose(); }} onClose={onClose} resourceKey={resourceKey} />;
+const ModalRouter = ({ modal, selected, reviews, decisions, cycleId, leaderActing, onDecision, onSubmitImmediate, onSubmitResource, onClose, onSubmitAll, onExtendSubmit, resourceKey }) => {
+  if (modal.type === 'REVOKE') return <RevokeModal item={modal.item} onConfirm={(reason, comment, extra = {}) => { onSubmitResource(resourceKey(modal.item), 'REVOKED', { reason, comment, resourceType: modal.item.resourceType, ...extra }); onClose(); }} onClose={onClose} />;
+  if (modal.type === 'MODIFY') return <ModifyModal item={modal.item} onConfirm={(changes, justification) => { onSubmitResource(resourceKey(modal.item), 'MODIFIED', { reason: justification, comment: changes, resourceType: modal.item.resourceType }); onClose(); }} onClose={onClose} />;
+  if (modal.type === 'BULK_CERTIFY') return <BulkCertifyModal selected={selected} reviews={reviews} decisions={decisions} onConfirm={(keys) => { onSubmitImmediate(keys.map((k) => { const r = reviews.find((rv) => resourceKey(rv) === k); return engineItem(k, null, { decision: 'CERTIFIED', resourceType: r?.resourceType }); })); onClose(); }} onClose={onClose} resourceKey={resourceKey} />;
   if (modal.type === 'SUBMIT_ALL') return <SubmitModal onConfirm={onSubmitAll} onClose={onClose} />;
   if (modal.type === 'EXTEND') return <ExtendModal onConfirm={onExtendSubmit} onClose={onClose} />;
   return null;
@@ -639,6 +667,14 @@ const partialToChanges = (pr) => {
 
 /** A plain reason string (not the JSON modify payload). */
 const plainReason = (d) => (typeof d.reason === 'string' && !d.reason.startsWith('{')) ? d.reason : (d.comment || null);
+
+/** Build an engine-shaped decision item from a UI decision (resource- or principal-level). */
+const engineItem = (resourceArn, principalArn, uiDecision) => ({
+  resourceArn,
+  ...(principalArn ? { principalArn } : {}),
+  reason: plainReason(uiDecision),
+  ...toEngineVerb(uiDecision),
+});
 
 const buildDecisionBatch = (reviews, decisions, resourceKey, principalDecisions = {}) => {
   const batch = [];
