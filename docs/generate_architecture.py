@@ -22,11 +22,12 @@ from diagrams.aws.compute import EC2
 GRAPH_ATTR = {
     "fontsize": "20",
     "labelloc": "t",
-    "label": "VIGIL — Access Recertification Engine",
-    "pad": "0.6",
+    "label": "VIGIL - Access Recertification Engine",
+    "pad": "0.75",
     "splines": "spline",
-    "nodesep": "0.7",
-    "ranksep": "1.0",
+    "nodesep": "1.0",
+    "ranksep": "1.7",
+    "concentrate": "true",
     "bgcolor": "white",
 }
 
@@ -86,9 +87,10 @@ with Diagram(
     api_fn >> Edge(label="enqueue decision") >> queue >> enforcer
     queue >> Edge(style="dashed", label="after N retries") >> dlq >> Edge(style="dashed") >> alarm
 
-    # Enforcement applies scoped change via connectors
-    for t in targets:
-        enforcer >> Edge(label="apply change") >> t
+    # Enforcement applies scoped change via connectors (label once to reduce clutter)
+    enforcer >> Edge(label="apply scoped change") >> targets[0]
+    for t in targets[1:]:
+        enforcer >> Edge() >> t
 
     # Persistence + evidence
     api_fn >> Edge(style="dashed") >> table
