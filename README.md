@@ -13,8 +13,6 @@ React UI for owners and admins.
 > Looking for implementation details, the API reference, or how to extend the engine to
 > new resource types? See the **[Developer Guide](engine/DEVELOPER_GUIDE.md)**.
 
-![VIGIL: revoke a permission and watch it enforce](docs/demo-revoke.gif)
-
 ---
 
 ## What it does
