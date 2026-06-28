@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { mask } from '../utils/redact.js';
 
 const REVOKE_REASONS = ['Unnecessary access', 'Security concern', 'Resource decommissioned', 'Policy violation', 'Other'];
 
@@ -194,19 +195,19 @@ const UserAccessTable = ({ accessEntries = [], onDecisionsChange, disabled = fal
               const isDecided = !!decision;
               return (
                 <tr key={entry.principalArn} className={isDecided ? `uat-row-decided uat-row-${decision.decision.toLowerCase()}` : ''}>
-                  <td title={entry.principalArn} className="uat-principal-name">
+                  <td title={mask(entry.principalArn)} className="uat-principal-name">
                     {entry.principalType === 'AWS_SERVICE' && entry.sourceArn ? (
                       <span className="uat-service-principal">
-                        <span>{entry.principalName || '-'}</span>
-                        <span className="uat-source-arn" title={entry.sourceArn}>
-                          > {extractResourceName(entry.sourceArn)}
+                        <span>{mask(entry.principalName || '-')}</span>
+                        <span className="uat-source-arn" title={mask(entry.sourceArn)}>
+                          > {mask(extractResourceName(entry.sourceArn))}
                         </span>
                         {entry.sourceOwner && (
                           <span className="uat-source-owner">(owner: {entry.sourceOwner})</span>
                         )}
                       </span>
                     ) : (
-                      entry.principalName || '-'
+                      mask(entry.principalName || '-')
                     )}
                   </td>
                   <td>

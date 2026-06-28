@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../components/AuthProvider.jsx';
 import { getMyReviews, getCycleDetails, submitDecisions, requestExtension } from '../utils/api.js';
+import { mask } from '../utils/redact.js';
 import AccessDetailPanel from '../components/AccessDetailPanel.jsx';
 import UserAccessTable from '../components/UserAccessTable.jsx';
 import PartialRevokeSelector from '../components/PartialRevokeSelector.jsx';
@@ -301,7 +302,7 @@ const ResourceList = ({ items, decisions, onDecision, selected, onSelect, onRevo
 
         return (
           <div key={key}>
-            <div className="resource-row" title={item.resourceArn || item.arn}>
+            <div className="resource-row" title={mask(item.resourceArn || item.arn)}>
               {!readOnly && <input type="checkbox" className="resource-checkbox" checked={selected.has(key)} onChange={() => onSelect(key)} disabled={!isPending} title={!isPending ? 'Already decided' : (hasAccessEntries ? 'Select to certify the whole resource, or expand (▸) to decide per principal' : 'Select for bulk certify')} />}
               {hasExpandable ? (
                 <button className="expand-toggle" onClick={() => toggleExpand(key)} title="Toggle access details">
@@ -311,10 +312,10 @@ const ResourceList = ({ items, decisions, onDecision, selected, onSelect, onRevo
                 <span style={{ width: 24 }} />
               )}
               <div className="resource-info">
-                <span title={item.resourceArn || item.arn}>{item.resourceName || item.resourceId || '-'}</span>
+                <span title={mask(item.resourceArn || item.arn)}>{mask(item.resourceName || item.resourceId || '-')}</span>
                 <span>{item.resourceType || '-'}</span>
-                <span title={item.accountId ? `${item.accountName || ''} (${item.accountId})` : '-'}>
-                  {item.accountName ? `${item.accountName}` : item.accountId || '-'}
+                <span title={item.accountId ? `${item.accountName || ''} (${mask(item.accountId)})` : '-'}>
+                  {item.accountName ? `${item.accountName}` : mask(item.accountId) || '-'}
                 </span>
                 <span>{item.ownerEmail || '-'}</span>
                 <span>
@@ -384,7 +385,7 @@ const RevokeModal = ({ item, onConfirm, onClose }) => {
             ? 'Full revocation will remove all access permissions for this resource.'
             : 'Partial revocation will remove only the selected permissions.'}
         </div>
-        <p style={{ fontSize: 12, color: '#636e72' }}>ARN: {item.resourceArn || item.arn}</p>
+        <p style={{ fontSize: 12, color: '#636e72' }}>ARN: {mask(item.resourceArn || item.arn)}</p>
 
         {supportsPartial && (
           <div className="revoke-mode-toggle">
@@ -442,7 +443,7 @@ const ModifyModal = ({ item, onConfirm, onClose }) => {
         <h3 className="modal-title">Request Modification - {item.resourceName || item.resourceId}</h3>
         <div className="modal-field">
           <label>Resource</label>
-          <input readOnly value={`${item.resourceType} - ${item.resourceArn || item.arn || '-'}`} />
+          <input readOnly value={mask(`${item.resourceType} - ${item.resourceArn || item.arn || '-'}`)} />
         </div>
         <div className="modal-field">
           <label>Current Tags</label>
