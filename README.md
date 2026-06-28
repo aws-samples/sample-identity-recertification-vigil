@@ -112,6 +112,28 @@ sam deploy --guided \
                         UiBaseUrl=https://your-ui.example.com
 ```
 
+### Deploy parameters
+
+When you run `sam deploy --guided`, you are prompted for these. Defaults are shown in brackets.
+
+| Parameter | Dev value | Notes |
+|---|---|---|
+| Stack Name | `recert-engine-dev` | Any name; use `-prod` for production. |
+| AWS Region | `us-east-1` | Your target region. |
+| `Stage` | `dev` | Names resources `*-dev`; use `staging` / `prod` accordingly. |
+| `SesSenderEmail` | an SES-verified address you own | Used for owner emails. Accept the default for a backend-only smoke test, but emails will not send until the sender is verified in SES. |
+| `UiBaseUrl` | your UI URL, or blank | Only used to build deep links in owner emails. Blank is fine for a backend-only test. |
+| `RecertDeadlineDays` | `14` | Review window in days. |
+| `CrossAccountRoleName` | `VIGILCrossAccountRole` (default) | Only relevant for cross-account enforcement. |
+| `CognitoUserPoolArn` | blank | Blank lets the stack create its own pool (easiest first deploy). For production, supply an existing hardened pool ARN. |
+| `EnableEvidenceBucket` | `false` for dev | `true` creates an S3 Object Lock (WORM) bucket that cannot be easily deleted (locked objects block teardown). Use `false` for a cleanable dev stack; `true` for production or compliance. |
+| `EvidenceRetentionDays` | `2920` | WORM retention in days (8 years). Ignored when the evidence bucket is disabled. |
+| `EvidenceLockMode` | `COMPLIANCE` | `COMPLIANCE` (no early delete, even root) or `GOVERNANCE` (privileged override). Ignored when the bucket is disabled. Prefer `GOVERNANCE` if you enable it in dev. |
+
+Remaining prompts: confirm changes before deploy `Y`, allow SAM CLI IAM role creation `Y`, disable rollback `N`, save arguments to configuration file `Y` (so next time you can just run `sam deploy`).
+
+> Tip: keep `EnableEvidenceBucket=false` for any throwaway or dev stack so it can be torn down cleanly. Everything else can take defaults for a first deploy.
+
 The deploy outputs the API endpoint, DynamoDB table name, SQS queue URL, and (if created)
 the Cognito user pool and client IDs.
 
