@@ -60,10 +60,30 @@ docs/                    # Documentation hub + architecture diagram
 
 ![Recertification engine architecture](docs/architecture.png)
 
+The engine is fully serverless. The flow shown above:
+
+1. **Request** — a client (your UI or ours) calls the **API Gateway** REST API with a Cognito ID
+   token; an **Amazon Cognito** user pool authorizer (`COGNITO_USER_POOLS`) validates it, then
+   `recert-api` handles the request.
+2. **Discovery & notify** — starting a cycle invokes `recert-discovery`, which finds resources
+   by their `owner` tag via the **Resource Groups Tagging API** and builds per-owner review
+   items; `recert-notifier` emails each owner through **Amazon SES**.
+3. **Durable enforcement** — when an owner decides, `recert-api` writes the decision and enqueues
+   it to an **SQS** queue (idempotent). `recert-enforcer` consumes it and runs
+   `snapshot → apply → verify`. Failures retry and dead-letter to a **DLQ** with a **CloudWatch**
+   alarm.
+4. **Scoped connectors** — the enforcer never calls AWS APIs directly; it delegates to pluggable
+   connectors that apply a *scoped* change to the target resource (**S3 bucket**, **IAM user/role**,
+   **EC2 instance**). Any unsupported type is routed to a ticket instead of guessed.
+5. **State & evidence** — cycles, reviews, decisions, and snapshots live in a single **DynamoDB**
+   table; every action appends to a hash-chained evidence trail, optionally mirrored to an
+   **S3 Object Lock (WORM)** bucket for immutable, defensible records.
+
+> The diagram is generated from `docs/generate_architecture.py` (mingrammer `diagrams` +
+> Graphviz). Regenerate with `python3 docs/generate_architecture.py`.
+
 Discovery and notification run as their own Lambda functions, triggered on cycle creation
-and by an EventBridge schedule. The REST API is protected by an **Amazon Cognito user pool
-authorizer** (`COGNITO_USER_POOLS`); callers pass a Cognito ID token in the `Authorization`
-header.
+and by an EventBridge schedule.
 
 ---
 
