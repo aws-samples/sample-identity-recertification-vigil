@@ -60,15 +60,18 @@ with Diagram(
         enforcer = Lambda("recert-enforcer\nsnapshot -> apply -> verify")
 
     with Cluster("Resource connectors (scoped)"):
-        targets = [
-            S3("s3:bucket"),
-            IAM("iam:user / role"),
-            EC2("ec2:instance"),
-        ]
+        c_s3 = S3("s3:bucket")
+        c_iam = IAM("iam:user / role")
+        c_ec2 = EC2("ec2:instance")
+        # invisible edges force a horizontal row instead of a vertical stack
+        c_s3 >> Edge(style="invis") >> c_iam >> Edge(style="invis") >> c_ec2
+        targets = [c_s3, c_iam, c_ec2]
 
     with Cluster("State & evidence"):
         table = Dynamodb("DynamoDB single table\ncycles / reviews / decisions\nsnapshots / hash-chained evidence")
         evidence = S3("Evidence S3\n(Object Lock / WORM, optional)")
+        # invisible edge keeps the two side by side
+        table >> Edge(style="invis") >> evidence
 
     # Request path
     client >> Edge(label="REST + JWT") >> api_gw >> api_fn
