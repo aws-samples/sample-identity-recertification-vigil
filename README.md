@@ -1,13 +1,13 @@
-# VIGIL — Access Recertification Engine
+# VIGIL: Access Recertification Engine
 
 VIGIL is a standalone, production-grade **access recertification engine** for AWS. It
 discovers resources by their `owner` tag, raises review requests to the owners, accepts
 owner decisions (**certify / modify / revoke**), and then **durably enforces the resulting
-permission change** on the resource — with an immutable, hash-chained evidence trail for
+permission change** on the resource, with an immutable, hash-chained evidence trail for
 every decision and every change applied.
 
 The engine is integration-first: a documented REST API drives all behavior, so it can be
-embedded behind your own UI. This repository also ships a minimal, AWS Console–styled
+embedded behind your own UI. This repository also ships a minimal, AWS Console-styled
 React UI for owners and admins.
 
 > Looking for implementation details, the API reference, or how to extend the engine to
@@ -17,19 +17,19 @@ React UI for owners and admins.
 
 ## What it does
 
-1. **Discover** — enumerate resources tagged `owner=<email>`, resolve who has access to
+1. **Discover**: enumerate resources tagged `owner=<email>`, resolve who has access to
    each (bucket policy / IAM / ACL), and create per-owner review items for a cycle.
-2. **Request / notify** — email each owner their pending reviews with a deep link.
-3. **Decide** — owners certify, modify (remove specific permissions), or revoke, per
+2. **Request / notify**: email each owner their pending reviews with a deep link.
+3. **Decide**: owners certify, modify (remove specific permissions), or revoke, per
    resource or per principal.
-4. **Enforce** — a durable, idempotent worker applies the change through a pluggable
+4. **Enforce**: a durable, idempotent worker applies the change through a pluggable
    **resource connector**, snapshotting the before-state for rollback and recording
    hash-chained evidence.
 
 Automated enforcement ships for **Amazon S3 buckets**, **IAM users**, and **IAM roles**.
 Any other tagged resource type is fully recertifiable; unsupported types fall back to an
 IT-admin ticket instead of an unsafe automated change. New types are added by implementing
-one connector — see the Developer Guide.
+one connector (see the Developer Guide).
 
 ---
 
@@ -62,20 +62,20 @@ docs/                    # Documentation hub + architecture diagram
 
 The engine is fully serverless. The flow shown above:
 
-1. **Request** — a client (your UI or ours) calls the **API Gateway** REST API with a Cognito ID
+1. **Request**: a client (your UI or ours) calls the **API Gateway** REST API with a Cognito ID
    token; an **Amazon Cognito** user pool authorizer (`COGNITO_USER_POOLS`) validates it, then
    `recert-api` handles the request.
-2. **Discovery & notify** — starting a cycle invokes `recert-discovery`, which finds resources
+2. **Discovery & notify**: starting a cycle invokes `recert-discovery`, which finds resources
    by their `owner` tag via the **Resource Groups Tagging API** and builds per-owner review
    items; `recert-notifier` emails each owner through **Amazon SES**.
-3. **Durable enforcement** — when an owner decides, `recert-api` writes the decision and enqueues
+3. **Durable enforcement**: when an owner decides, `recert-api` writes the decision and enqueues
    it to an **SQS** queue (idempotent). `recert-enforcer` consumes it and runs
    `snapshot → apply → verify`. Failures retry and dead-letter to a **DLQ** with a **CloudWatch**
    alarm.
-4. **Scoped connectors** — the enforcer never calls AWS APIs directly; it delegates to pluggable
+4. **Scoped connectors**: the enforcer never calls AWS APIs directly; it delegates to pluggable
    connectors that apply a *scoped* change to the target resource (**S3 bucket**, **IAM user/role**,
    **EC2 instance**). Any unsupported type is routed to a ticket instead of guessed.
-5. **State & evidence** — cycles, reviews, decisions, and snapshots live in a single **DynamoDB**
+5. **State & evidence**: cycles, reviews, decisions, and snapshots live in a single **DynamoDB**
    table; every action appends to a hash-chained evidence trail, optionally mirrored to an
    **S3 Object Lock (WORM)** bucket for immutable, defensible records.
 
@@ -140,9 +140,9 @@ Full deployment, API, and extension instructions are in the
 `ui/` is a React 18 + Vite single-page app styled to match the AWS Management Console
 (Cloudscape look, Amazon Ember typeface). It contains exactly two areas:
 
-- **Recertification** — owners review and decide on their resources (per-resource and
+- **Recertification**: owners review and decide on their resources (per-resource and
   per-principal).
-- **Discovery** (admin only) — start a fresh cycle and view run history with outcome counts
+- **Discovery** (admin only): start a fresh cycle and view run history with outcome counts
   (certified / revoked / modified / pending, completion %).
 
 Configure `ui/.env` with the deployed `VITE_API_URL`, `VITE_COGNITO_USER_POOL_ID`, and

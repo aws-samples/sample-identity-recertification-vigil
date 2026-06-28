@@ -3,7 +3,7 @@
 A standalone, production-grade **access recertification engine** for AWS. It discovers
 resources by `owner` tag, raises review requests to owners, accepts owner decisions
 (**certify / modify / revoke**), and **durably enforces the resulting permission change**
-on the resource — with an immutable, hash-chained evidence trail for every decision and
+on the resource, with an immutable, hash-chained evidence trail for every decision and
 every change applied.
 
 This module is self-contained and integration-first: your UI (or any client) drives it
@@ -14,12 +14,12 @@ audit-writer, IdP-sync, or activity-tracking code.
 
 ## Scope (what this engine does, and only this)
 
-1. **Discovery** — enumerate resources tagged `owner=<email>`, resolve who has access to
+1. **Discovery**: enumerate resources tagged `owner=<email>`, resolve who has access to
    each (bucket policy / IAM / ACL), and create per-owner review items for a cycle.
-2. **Request / Notify** — email each owner their pending reviews with a deep link.
-3. **Decision intake** — owners certify, modify (remove specific permissions), or revoke,
+2. **Request / Notify**: email each owner their pending reviews with a deep link.
+3. **Decision intake**: owners certify, modify (remove specific permissions), or revoke,
    per-resource or per-principal, via `POST /decisions`.
-4. **Enforcement** — a durable, idempotent worker applies the change through a pluggable
+4. **Enforcement**: a durable, idempotent worker applies the change through a pluggable
    **resource connector** (S3, IAM shipped; extensible), snapshotting before-state for
    rollback and recording hash-chained evidence.
 
@@ -100,7 +100,7 @@ When `EVIDENCE_BUCKET` is configured, evidence is also written to S3 with Object
 
 ---
 
-## Configuration (all via env / SSM — no hardcoded account)
+## Configuration (all via env / SSM, no hardcoded account)
 
 | Variable | Required | Purpose |
 |---|---|---|
@@ -115,15 +115,15 @@ When `EVIDENCE_BUCKET` is configured, evidence is also written to S3 with Object
 
 ---
 
-## Integration contract (summary — see `openapi.yaml`)
+## Integration contract (summary, see `openapi.yaml`)
 
-- `POST /cycles` — start a recertification cycle (quarterly or ad-hoc/scoped)
-- `GET  /cycles/{cycleId}` — cycle summary + per-owner progress
-- `GET  /reviews?cycleId=` — current owner's pending review items
-- `POST /decisions` — submit decisions: `{ cycleId, decisions: [{ resourceArn, principalArn?, decision, reason?, changes? }] }`
-- `GET  /decisions/{decisionId}` — enforcement status (`PENDING|IN_PROGRESS|ENFORCED|FAILED|NOT_REQUIRED`)
-- `GET  /resources/{arn}/snapshots` — before-state snapshots
-- `POST /rollback` — restore a resource to a prior snapshot
+- `POST /cycles`: start a recertification cycle (quarterly or ad-hoc/scoped)
+- `GET  /cycles/{cycleId}`: cycle summary + per-owner progress
+- `GET  /reviews?cycleId=`: current owner's pending review items
+- `POST /decisions`, submit decisions: `{ cycleId, decisions: [{ resourceArn, principalArn?, decision, reason?, changes? }] }`
+- `GET  /decisions/{decisionId}`: enforcement status (`PENDING|IN_PROGRESS|ENFORCED|FAILED|NOT_REQUIRED`)
+- `GET  /resources/{arn}/snapshots`: before-state snapshots
+- `POST /rollback`: restore a resource to a prior snapshot
 
 ---
 

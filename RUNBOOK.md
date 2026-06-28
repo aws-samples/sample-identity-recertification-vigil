@@ -44,13 +44,13 @@ See [docs/architecture.png](docs/architecture.png) for the diagram.
 
 A cycle moves through five phases.
 
-**Phase 1 — Initiate.** A client calls `POST /cycles` (or the quarterly EventBridge schedule
+**Phase 1: Initiate.** A client calls `POST /cycles` (or the quarterly EventBridge schedule
 fires). `recert-api` writes a `CYCLE#<id> / SUMMARY` record with status `INITIATING` and
 asynchronously invokes `recert-discovery`.
 
-**Phase 2 — Discover.** `recert-discovery` calls the Resource Groups Tagging API for every
+**Phase 2: Discover.** `recert-discovery` calls the Resource Groups Tagging API for every
 resource tagged `owner=<email>`. For each resource it enriches access details (for S3: bucket
-policy, public access block, ACL) and derives **access entries** — the principals that have
+policy, public access block, ACL) and derives **access entries**, the principals that have
 access, with their access source (`BUCKET_POLICY`, `IAM_POLICY`, `IAM_GROUP`, `ACL`) and
 permissions. It writes one review item per (owner, resource), flips the cycle to `ACTIVE` with
 totals, and triggers `recert-notifier`.
@@ -58,15 +58,15 @@ totals, and triggers `recert-notifier`.
 > The Tagging API is eventually consistent; a freshly tagged resource may take a few minutes
 > to appear.
 
-**Phase 3 — Notify.** `recert-notifier` emails each owner the list of pending reviews with a
+**Phase 3: Notify.** `recert-notifier` emails each owner the list of pending reviews with a
 deep link built from `UI_BASE_URL`.
 
-**Phase 4 — Decide.** Owners call `POST /decisions` (via the UI). `recert-api` validates each
+**Phase 4: Decide.** Owners call `POST /decisions` (via the UI). `recert-api` validates each
 decision against the stored review item, enriches it (resource type, access info, per-principal
 access source), writes an immutable `DECISION` record with a deterministic id, and enqueues it
 to SQS. Decisions are write-once per `(cycle, resource, principal)` via a conditional write.
 
-**Phase 5 — Enforce.** `recert-enforcer` consumes the queue. For each decision it captures a
+**Phase 5: Enforce.** `recert-enforcer` consumes the queue. For each decision it captures a
 snapshot, applies the change through the matching connector, appends evidence, and sets the
 decision and review-item statuses. `CERTIFY` is recorded as evidence with status
 `NOT_REQUIRED`; `REVOKE`/`MODIFY` produce a real change (`ENFORCED`) or a `TICKETED` record when
@@ -146,18 +146,18 @@ sam deploy --guided --stack-name recert-engine-<stage> \
 Outputs: `ApiEndpoint`, `TableName`, `EnforcementQueueUrl`, and (if created)
 `CognitoUserPoolId` / `CognitoUserPoolClientId`. Then create a user and add them to `owner`
 (and `admin` for cycle/rollback rights). The Lambda runtime is `nodejs24.x`, which provides
-AWS SDK v3 — no dependency bundling is required.
+AWS SDK v3, so no dependency bundling is required.
 
 ---
 
 ## Monitoring
 
-- **DLQ alarm** (`recert-engine-enforcement-dlq-not-empty-<stage>`) — fires when a decision
+- **DLQ alarm** (`recert-engine-enforcement-dlq-not-empty-<stage>`) fires when a decision
   could not be enforced after retries. This is the primary "something went wrong" signal.
-- **Structured logs** — each function logs JSON with `level` and `code`. Watch for
+- **Structured logs**: each function logs JSON with `level` and `code`. Watch for
   `ENFORCEMENT_FAILED`, `EMAIL_SEND_FAILED`, `REVIEW_STATUS_UPDATE_FAILED`,
   `CROSS_ACCOUNT_ASSUME_ROLE_FAILED`.
-- **Stuck decisions** — a decision in `PENDING`/`IN_PROGRESS` for long means the enforcer has
+- **Stuck decisions**: a decision in `PENDING`/`IN_PROGRESS` for long means the enforcer has
   not processed it; check enforcer logs and the queue.
 
 ---
@@ -210,7 +210,7 @@ Developer Guide.
 ## Key design decisions
 
 **Asynchronous enforcement.** Decisions are queued and applied by a separate, idempotent
-worker so the API stays fast and the change is durable, retried, and observable — not a
+worker so the API stays fast and the change is durable, retried, and observable, not a
 best-effort inline call.
 
 **Tag-driven ownership.** Tags are the one universal metadata mechanism across AWS services,

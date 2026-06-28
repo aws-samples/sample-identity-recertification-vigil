@@ -19,7 +19,7 @@ sam validate -t template.yaml --lint     # validate the SAM template
 sam build                                 # build before deploy
 ```
 
-- Node.js 20+ (the Lambda runtime is `nodejs24.x`, which provides AWS SDK v3 — do not bundle
+- Node.js 20+ (the Lambda runtime is `nodejs24.x`, which provides AWS SDK v3, so do not bundle
   the SDK).
 - Source is ES modules (`.mjs`). Keep modules small and dependency-injectable so they can be
   unit tested without AWS.
@@ -29,13 +29,13 @@ sam build                                 # build before deploy
 ## What a connector is
 
 A **connector** encapsulates everything the engine needs to enforce recertification decisions
-for one resource type. The enforcer never calls AWS resource APIs directly — it calls
+for one resource type. The enforcer never calls AWS resource APIs directly; it calls
 connectors. A connector implements four operations:
 
 | Method | Purpose |
 |---|---|
 | `snapshot(ctx)` | Capture the resource's current access configuration (before-state) for evidence and rollback. |
-| `revoke(ctx)` | Remove access — full (resource-level) or per-principal — **scoped to this resource only**. |
+| `revoke(ctx)` | Remove access, full (resource-level) or per-principal, **scoped to this resource only**. |
 | `modify(ctx)` | Remove a *subset* of access. Throw `TicketRequiredError` if it can't be done safely. |
 | `rollback(ctx, snapshot)` | Restore the resource to a captured snapshot. |
 
@@ -49,7 +49,7 @@ These rules are what make the engine safe and auditable. A connector **must**:
 
 1. **Stay scoped.** A revoke/modify may only affect the **target resource**. Never widen the
    blast radius. In particular, when access is granted through a principal's IAM identity
-   (not the resource), do **not** mutate the principal's IAM policies — add a resource-side
+   (not the resource), do **not** mutate the principal's IAM policies; add a resource-side
    scoped explicit `Deny` (see the S3 connector for the pattern), or raise
    `TicketRequiredError`.
 2. **Never silently no-op.** If a change cannot be applied safely or the type/shape isn't
@@ -59,7 +59,7 @@ These rules are what make the engine safe and auditable. A connector **must**:
    `rollback(ctx, snapshot)` can fully restore (note any irreversible exceptions in the result
    `note`).
 4. **Use injected clients.** Use `ctx.clients` (already scoped to the resource's account).
-   Never construct your own credentials or clients inside the connector — this keeps it
+   Never construct your own credentials or clients inside the connector; this keeps it
    unit-testable and cross-account-safe.
 5. **Return a structured result.** `{ applied: boolean, actions: string[], note?: string }`.
    `actions` is recorded verbatim in the evidence trail, so make it human-meaningful (e.g.
@@ -128,7 +128,7 @@ Add only the API actions your connector calls to the **enforcer** role in `templ
 ### 4. Add tests
 
 Add cases to `tests/connectors.test.mjs` using a **fake client** (no network) that records the
-commands sent. Assert the scoped-enforcement invariants for your type — e.g. that `revoke`
+commands sent. Assert the scoped-enforcement invariants for your type, e.g. that `revoke`
 only touches the target resource and `modify` removes exactly the selected items. Run:
 
 ```bash

@@ -1,4 +1,4 @@
-# Recertification Engine — Developer Guide
+# Recertification Engine: Developer Guide
 
 This guide explains how the access recertification engine works, how to deploy and operate
 it, how to integrate it with a client application, and how to extend it to new AWS resource
@@ -38,7 +38,7 @@ evidence of what was reviewed, who decided, and what changed.
 Use the engine when you need to:
 
 - Run quarterly or ad-hoc access recertification across many resources and owners.
-- Guarantee that a reviewer's decision actually changes the resource — not just a ticket.
+- Guarantee that a reviewer's decision actually changes the resource, not just a ticket.
 - Produce a defensible, immutable audit trail of access decisions for compliance.
 
 The engine is **API-first**. All behavior is driven through a REST API, so you can use the
@@ -94,7 +94,7 @@ permission change is durable and observable rather than a best-effort inline cal
 ### Prerequisites
 
 - AWS CLI v2 and AWS SAM CLI v1.100+
-- Node.js 20+ (Lambda runtime is `nodejs24.x`, which provides AWS SDK v3 — no bundling needed)
+- Node.js 20+ (Lambda runtime is `nodejs24.x`, which provides AWS SDK v3, no bundling needed)
 - Permission to deploy CloudFormation/SAM stacks, and (for cross-account enforcement) the
   `VIGILCrossAccountRole` deployed in member accounts
 
@@ -119,8 +119,8 @@ Template parameters:
 | `CognitoUserPoolArn` | *(empty)* | Bring your own pool. Leave blank to create one. |
 | `EnableEvidenceBucket` | `true` | Create an S3 Object Lock (WORM) evidence bucket. |
 
-Stack outputs include `ApiEndpoint`, `TableName`, `EnforcementQueueUrl`, and — when the
-engine creates the pool — `CognitoUserPoolId` and `CognitoUserPoolClientId`.
+Stack outputs include `ApiEndpoint`, `TableName`, `EnforcementQueueUrl`, and, when the
+engine creates the pool, `CognitoUserPoolId` and `CognitoUserPoolClientId`.
 
 ### Step 2: Create a user
 
@@ -166,7 +166,7 @@ The REST API is protected by an **Amazon Cognito user pool authorizer**
 request. API Gateway validates the token against the user pool before invoking the function.
 See [Control access to REST APIs using Amazon Cognito user pools as an authorizer](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html).
 
-Owner identity is taken from the token's `email` claim — never from the request body — so a
+Owner identity is taken from the token's `email` claim (never from the request body), so a
 caller can only act on their own reviews. Admin-only operations (such as `POST /rollback`)
 additionally require the `admin` group in the token's `cognito:groups` claim.
 
@@ -185,7 +185,7 @@ helper script `scripts/setup-cognito-prod.sh` provisions one with:
 
 - **MFA required** (TOTP / authenticator app via `set-user-pool-mfa-config`).
 - **Advanced security `ENFORCED`** for compromised-credential and risk detection.
-- **SRP-only app client** — explicit auth flows limited to `ALLOW_USER_SRP_AUTH` and
+- **SRP-only app client**: explicit auth flows limited to `ALLOW_USER_SRP_AUTH` and
   `ALLOW_REFRESH_TOKEN_AUTH`. The admin/password flows (`ALLOW_ADMIN_USER_PASSWORD_AUTH`,
   `ALLOW_USER_PASSWORD_AUTH`) are intentionally absent, so password-grant auth cannot occur.
 - **Strong password policy** (14+ chars, all character classes) and **short token lifetimes**
@@ -275,18 +275,18 @@ or `NOT_FOUND`. Poll `GET /decisions?decisionId=` for the enforcement outcome.
 The engine enforces the **least disruptive, scoped** change that satisfies the decision, and
 never silently does nothing:
 
-- **S3, access via bucket policy / ACL** — the principal (or selected actions) is removed
+- **S3, access via bucket policy / ACL**: the principal (or selected actions) is removed
   from the bucket policy or ACL. If a statement is left with no principals, it is dropped; if
   no statements remain, the bucket policy is deleted.
-- **S3, access via IAM** — because the grant lives in the principal's IAM policy (not the
+- **S3, access via IAM**: because the grant lives in the principal's IAM policy (not the
   bucket), the engine adds a **scoped explicit `Deny`** for that principal on this bucket.
   This guarantees loss of access to *this resource only* without touching the principal's IAM
   policies or its access to anything else.
-- **IAM user / role** — when the resource being recertified *is* the user or role, a full
+- **IAM user / role**: when the resource being recertified *is* the user or role, a full
   revoke detaches managed policies (and for users, removes group memberships, deactivates
   active access keys, and deletes the login profile). A modify removes only the selected
   items.
-- **Unsupported or unsafe to automate** — the connector raises `TicketRequiredError` and the
+- **Unsupported or unsafe to automate**: the connector raises `TicketRequiredError` and the
   engine creates a `TICKETED` record for manual IT action instead of guessing.
 
 Enforcement is **idempotent**: the `decisionId` is deterministic
@@ -303,8 +303,8 @@ type. Built-in connectors:
 | Connector | Resource type | Revoke | Modify | Per-principal | Rollback |
 |---|---|---|---|---|---|
 | `S3Connector` | `s3:bucket` | ✅ | ✅ | ✅ | ✅ |
-| `IamConnector` | `iam:user` | ✅ | ✅ | — | ✅ |
-| `IamRoleConnector` | `iam:role` | ✅ | ✅ | — | ✅ |
+| `IamConnector` | `iam:user` | ✅ | ✅ | N/A | ✅ |
+| `IamRoleConnector` | `iam:role` | ✅ | ✅ | N/A | ✅ |
 
 Resource types without a connector are still discoverable and reviewable; their decisions are
 routed to a ticket.
@@ -372,7 +372,7 @@ type/cycle fan-out queries.
 | Cycle summary | `CYCLE#<id>` | `SUMMARY` | `TYPE#CYCLE` / `<startDate>` |
 | Review item | `OWNER#<email>` | `REVIEW#<cycleId>#<arn>` | `TYPE#REVIEW_ITEM` / `<cycleId>#<status>` |
 | Decision | `DECISION#<decisionId>` | `META` | `TYPE#DECISION` / `<cycleId>#<ts>` |
-| Snapshot | `RESOURCE#<arn>` | `SNAPSHOT#<ts>` | — |
+| Snapshot | `RESOURCE#<arn>` | `SNAPSHOT#<ts>` | N/A |
 | Evidence | `RESOURCE#<arn>` | `EVIDENCE#<ts>` | `TYPE#EVIDENCE` / `<ts>` |
 | Ticket | `TYPE#TICKET` | `<ts>#<arn>#<principal>` | `TYPE#TICKET` / `<ts>` |
 
@@ -443,7 +443,7 @@ Each Lambda assumes a role scoped to only the actions it performs:
 
 For cross-account enforcement, deploy `VIGILCrossAccountRole` in each member account; the
 engine assumes it with a 15-minute session. Enforcement is always **scoped to the target
-resource** — the engine prefers a resource-side explicit `Deny` over mutating a principal's
+resource**: the engine prefers a resource-side explicit `Deny` over mutating a principal's
 IAM identity.
 
 ---
