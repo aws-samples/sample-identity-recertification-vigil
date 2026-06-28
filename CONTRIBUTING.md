@@ -10,6 +10,25 @@ For architecture and the full reference, see the
 
 ---
 
+## Ways to help
+
+You don't need deep context to make a useful first contribution:
+
+- **Add a resource connector** (the highest-impact path, detailed below). Good targets:
+  RDS, Lambda, SNS, SQS, DynamoDB, Secrets Manager. Each is self-contained.
+- **Improve docs**: clarify a setup step, fix a typo, or add an example you wish you'd had.
+- **Harden an existing connector**: add edge-case tests, tighten an IAM action, improve an
+  error message.
+- **Try a deployment and report friction**: open an issue describing anything that was
+  confusing or broke. Bug reports are genuinely valuable.
+- **Pick up a [good first issue](../../issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)**:
+  small, scoped tasks tagged for new contributors.
+
+If you're unsure where to start, open an issue describing what you'd like to work on and we'll
+point you at the right place.
+
+---
+
 ## Development setup
 
 ```bash
