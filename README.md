@@ -93,7 +93,7 @@ The engine is fully serverless. The flow shown above:
    `snapshot → apply → verify`. Failures retry and dead-letter to a **DLQ** with a **CloudWatch**
    alarm.
 4. **Scoped connectors**: the enforcer never calls AWS APIs directly; it delegates to pluggable
-   connectors that apply a *scoped* change to the target resource (**S3 bucket**, **IAM user/role**,
+   connectors that apply a _scoped_ change to the target resource (**S3 bucket**, **IAM user/role**,
    **EC2 instance**). Any unsupported type is routed to a ticket instead of guessed.
 5. **State & evidence**: cycles, reviews, decisions, and snapshots live in a single **DynamoDB**
    table; every action appends to a hash-chained evidence trail, optionally mirrored to an
@@ -134,19 +134,19 @@ sam deploy --guided \
 
 When you run `sam deploy --guided`, you are prompted for these. Defaults are shown in brackets.
 
-| Parameter | Dev value | Notes |
-|---|---|---|
-| Stack Name | `recert-engine-dev` | Any name; use `-prod` for production. |
-| AWS Region | `us-east-1` | Your target region. |
-| `Stage` | `dev` | Names resources `*-dev`; use `staging` / `prod` accordingly. |
-| `SesSenderEmail` | an SES-verified address you own | Used for owner emails. Accept the default for a backend-only smoke test, but emails will not send until the sender is verified in SES. |
-| `UiBaseUrl` | your UI URL, or blank | Only used to build deep links in owner emails. Blank is fine for a backend-only test. |
-| `RecertDeadlineDays` | `14` | Review window in days. |
-| `CrossAccountRoleName` | `VIGILCrossAccountRole` (default) | Only relevant for cross-account enforcement. |
-| `CognitoUserPoolArn` | blank | Blank lets the stack create its own pool (easiest first deploy). For production, supply an existing hardened pool ARN. |
-| `EnableEvidenceBucket` | `false` for dev | `true` creates an S3 Object Lock (WORM) bucket that cannot be easily deleted (locked objects block teardown). Use `false` for a cleanable dev stack; `true` for production or compliance. |
-| `EvidenceRetentionDays` | `2920` | WORM retention in days (8 years). Ignored when the evidence bucket is disabled. |
-| `EvidenceLockMode` | `COMPLIANCE` | `COMPLIANCE` (no early delete, even root) or `GOVERNANCE` (privileged override). Ignored when the bucket is disabled. Prefer `GOVERNANCE` if you enable it in dev. |
+| Parameter               | Dev value                         | Notes                                                                                                                                                                                     |
+| ----------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stack Name              | `recert-engine-dev`               | Any name; use `-prod` for production.                                                                                                                                                     |
+| AWS Region              | `us-east-1`                       | Your target region.                                                                                                                                                                       |
+| `Stage`                 | `dev`                             | Names resources `*-dev`; use `staging` / `prod` accordingly.                                                                                                                              |
+| `SesSenderEmail`        | an SES-verified address you own   | Used for owner emails. Accept the default for a backend-only smoke test, but emails will not send until the sender is verified in SES.                                                    |
+| `UiBaseUrl`             | your UI URL, or blank             | Only used to build deep links in owner emails. Blank is fine for a backend-only test.                                                                                                     |
+| `RecertDeadlineDays`    | `14`                              | Review window in days.                                                                                                                                                                    |
+| `CrossAccountRoleName`  | `VIGILCrossAccountRole` (default) | Only relevant for cross-account enforcement.                                                                                                                                              |
+| `CognitoUserPoolArn`    | blank                             | Blank lets the stack create its own pool (easiest first deploy). For production, supply an existing hardened pool ARN.                                                                    |
+| `EnableEvidenceBucket`  | `false` for dev                   | `true` creates an S3 Object Lock (WORM) bucket that cannot be easily deleted (locked objects block teardown). Use `false` for a cleanable dev stack; `true` for production or compliance. |
+| `EvidenceRetentionDays` | `2920`                            | WORM retention in days (8 years). Ignored when the evidence bucket is disabled.                                                                                                           |
+| `EvidenceLockMode`      | `COMPLIANCE`                      | `COMPLIANCE` (no early delete, even root) or `GOVERNANCE` (privileged override). Ignored when the bucket is disabled. Prefer `GOVERNANCE` if you enable it in dev.                        |
 
 Remaining prompts: confirm changes before deploy `Y`, allow SAM CLI IAM role creation `Y`, disable rollback `N`, save arguments to configuration file `Y` (so next time you can just run `sam deploy`).
 
@@ -165,6 +165,26 @@ aws cognito-idp admin-set-user-password --user-pool-id <POOL_ID> \
   --username owner@example.com --password '<StrongTempPassword>' --permanent
 aws cognito-idp admin-add-user-to-group --user-pool-id <POOL_ID> \
   --username owner@example.com --group-name owner
+```
+
+## Tag a Resource
+
+Before starting a cycle, tag at least one resource with an `owner=<email>` tag so it can be discovered.
+
+### S3 Bucket
+
+```bash
+aws s3api put-bucket-tagging \
+  --bucket <BUCKET_NAME> \
+  --tagging 'TagSet=[{Key=owner,Value=you@example.com}]'
+```
+
+### EC2 Instance
+
+```bash
+aws ec2 create-tags \
+  --resources <INSTANCE_ID> \
+  --tags Key=owner,Value=you@example.com
 ```
 
 Tag a resource so it is discovered, then start a cycle from the UI **Discovery** page or:
@@ -197,16 +217,16 @@ CloudFront).
 
 ## Configuration
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `TABLE_NAME` | yes | DynamoDB single-table store |
-| `ENFORCEMENT_QUEUE_URL` | yes | SQS queue the API enqueues decisions to |
-| `EVIDENCE_BUCKET` | no | S3 Object Lock (WORM) bucket for evidence mirroring |
-| `SES_SENDER_EMAIL` | yes | Verified SES sender for owner emails |
-| `UI_BASE_URL` | yes | Base URL used in email deep links |
-| `RECERT_DEADLINE_DAYS` | no (14) | Review window |
-| `MANAGEMENT_ACCOUNT_ID` | no | Resolved from STS at runtime if unset |
-| `CROSS_ACCOUNT_ROLE_NAME` | no (`VIGILCrossAccountRole`) | Role assumed in member accounts |
+| Variable                  | Required                     | Purpose                                             |
+| ------------------------- | ---------------------------- | --------------------------------------------------- |
+| `TABLE_NAME`              | yes                          | DynamoDB single-table store                         |
+| `ENFORCEMENT_QUEUE_URL`   | yes                          | SQS queue the API enqueues decisions to             |
+| `EVIDENCE_BUCKET`         | no                           | S3 Object Lock (WORM) bucket for evidence mirroring |
+| `SES_SENDER_EMAIL`        | yes                          | Verified SES sender for owner emails                |
+| `UI_BASE_URL`             | yes                          | Base URL used in email deep links                   |
+| `RECERT_DEADLINE_DAYS`    | no (14)                      | Review window                                       |
+| `MANAGEMENT_ACCOUNT_ID`   | no                           | Resolved from STS at runtime if unset               |
+| `CROSS_ACCOUNT_ROLE_NAME` | no (`VIGILCrossAccountRole`) | Role assumed in member accounts                     |
 
 ---
 
